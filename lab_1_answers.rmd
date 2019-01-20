@@ -1,0 +1,114 @@
+---
+title: "Lab_Assignment_1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## The Tibbles Chapter
+Create a tibble:
+```{r}
+my_tibble <- tibble(
+  x = 1:10, 
+  y = 2, 
+  z = x * y
+)
+print(my_tibble)
+```
+1. How can you tell if an object is a tibble? (Hint: try printing mtcars, which is a regular data frame).
+```{r mtcars}
+is_tibble(mtcars)
+is_tibble(my_tibble)
+```
+2. Compare and contrast the following operations on a data.frame and equivalent tibble. What is different? Why might the default data frame behaviours cause you frustration?
+```{r}
+df <- data.frame(abc = 1, xyz = "a")
+df$x
+df[, "xyz"]
+df[, c("abc", "xyz")]
+```
+Tibbles use different syntax for subsetting than do data frames. One important difference is that in a data frame, df$x returns the "xyz" column because it is a partial match. The same command used on a tibble triggers an error. The last two subsetting commands provided work the same way on tibbles, however. Aside from subsetting, another difference between tibbles and data frames is that tibbles keep the original type of the items they are initialized from, whereas the default data frame behavior is to convert strigns to factors.
+```{r}
+tib <- tibble(abc = 1, xyz = "a")
+tib$x
+tib[, "xyz"]
+tib[, c("abc", "xyz")]
+```
+4. Practice referring to non-syntactic names in the following data frame by:
+* Extracting the variable called 1.
+* Plotting a scatterplot of 1 vs 2.
+* Creating a new column called 3 which is 2 divided by 1.
+* Renaming the columns to one, two and three.
+```{r}
+annoying <- tibble(
+  `1` = 1:10,
+  `2` = `1` * 2 + rnorm(length(`1`))
+)
+annoying[,c('1')]
+plot('1', '2')
+annoying[,c('3')] <- annoying[,c('2')]/annoying[,c('1')]
+annoying <- rename(annoying, one = `1`, two = `2`, three = `3`)
+```
+5. What does tibble::enframe() do? When might you use it?
+This command converts vectors and data frames to a tibble.
+```{r}
+enframe(1:3)
+enframe(c(a = 5, b = 7))
+```
+
+6. What option controls how many additional column names are printed at the footer of a tibble?
+The n_extra argument to the print function controls this: 
+```{r}
+print(my_tibble, n_extra=2)
+```
+
+## The readr chapter
+1. What function would you use to read a file where fields were separated with
+“|”?
+I would use the read_delim() function from readr, and set the delim argument equal to "|".
+
+2. Apart from file, skip, and comment, what other arguments do read_csv() and read_tsv() have in common?
+These two functions share very similar syntax, so once you know one, you are pretty much set to use the other one. Some examples of shared arguments are col_names, col_types, and locale.
+
+4. Sometimes strings in a CSV file contain commas. To prevent them from causing problems they need to be surrounded by a quoting character, like " or '. By convention, read_csv() assumes that the quoting character will be ", and if you want to change it you’ll need to use read_delim() instead. What arguments do you need to specify to read the following text into a data frame: "x,y\n1,'a,b'"
+```{r}
+read_csv("x,y\n1,'a,b'", col_names=F, quote="\'")
+```
+
+## The tidy chapter
+
+3. Recreate the plot showing change in cases over time using table2 instead of table1. What do you need to do first?
+
+```{r}
+table2 <- subset(tidyr::table2, type == "cases")
+table2 <- rename(table2, cases = "count")
+ggplot(table2, aes(year, cases)) + 
+  geom_line(aes(group = country), colour = "grey50") + 
+  geom_point(aes(colour = country))
+```
+
+2. Why does this code fail?
+table4a %>% 
+  gather(1999, 2000, key = "year", value = "cases")
+
+The code fails because 1999 and 2000 are written as integers, not as column names. The following command works:
+```{r}
+table4a %>% 
+  gather(`1999`, `2000`, key = "year", value = "cases")
+```
+
+## The “database-like stuff” with dplyr
+1. Add a surrogate key to flights.
+```{r}
+library(nycflights13)
+flights %>% mutate(surrogate_key = 1:n())
+```
+2. Add the location of the origin and destination (i.e. the lat and lon) to flights.
+```{r}
+flights %>% 
+  left_join(airports, by = c("origin" = "faa")) %>%
+  left_join(airports, by = c("dest" = "faa"))
+```
